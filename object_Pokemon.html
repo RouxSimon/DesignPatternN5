@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Combat Pokemon</title>
+    </head>
+    <body>
+        <button onclick="summonPokemon()">Summon</button>
+        <button onclick="startRound()">Debut du Round</button>
+        <button onclick="fullFight()">Combat rapide</button>
+        <div id='tchat'></div>
+
+    </body>
+
+    <script>
+        var tchat = document.getElementById('tchat');
+        let pokemon1;
+        let pokemon2;
+        class Pokemon {
+            constructor(nom, type, pv, attaque, defense, vitesse){
+                this.nom = nom;
+                this.type = type;
+                this.pv = pv;
+                this.attaque = attaque;
+                this.defense = defense;
+                this.vitesse = vitesse;
+            }
+            
+            fight(cible){ 
+                // Une attque est determiné avec la puissance d'attaque de base * la résistance de l'adversaire
+                var pAttque = getRandom(this.attaque-20, this.attaque+20)*getResistance(this.type,cible.type);
+                // On prend en compte la defense de l'adversaire ( sur 100 )
+                pAttque = Math.floor(pAttque-(pAttque*(cible.defense/100)));
+                
+                cible.pv -= pAttque;
+                if(cible.pv <= 0){
+                    tchat.innerHTML += cible.nom+" à pris "+pAttque+", il est mort, le pokemon "+this.nom+" à gagné "+"<br>";
+                }else{
+                    tchat.innerHTML += cible.nom+" à pris "+pAttque+", il lui reste "+cible.pv+"<br>";
+                }
+
+            }
+            crie(){
+                console.log(this.nom+" un pokemon sauvage apparait")
+            }
+        }
+
+        class Evolution extends Pokemon{
+            constructor(nom, type, pv, attaque, defense, vitesse){
+                super(nom,type,pv,attaque,defense,vitesse);
+                this.nom = this.nom+"_evolué";
+                this.pv = this.pv+(this.pv*(getRandom(15,20)/100));
+                this.attaque = this.attaque+(this.attaque*(getRandom(15,20)/100));
+                this.defense = this.defense+(this.defense*(getRandom(15,20)/100));
+                this.vitesse = this.vitesse+(this.vitesse*(getRandom(15,20)/100));
+            }
+            crie(){
+                console.log(this.nom+' un pokemon sauvage evolué apparait')
+            }
+        }
+        
+        let Pikatchu = new Pokemon("Pikatchu","Feu",150,100,50,150);
+        let Bulbizarre = new Pokemon("Pikatchu","Feu",150,100,50,150);
+        let Salamèche = new Pokemon("Salamèche","Feu",125,100,50,100);
+        let Carapuce = new Pokemon("Carapuce","Eau",125,75,100,75);
+        let Papulusion = new Pokemon("Papulusion","Vol",100,75,50,125);
+
+
+        let listPokemon = [Pikatchu,Bulbizarre,Salamèche,Carapuce,Papulusion]
+
+        evol = new Evolution("Pikatchu","Feu",150,100,50,150);
+        console.log(evol)
+        evol.crie();
+
+        function summonPokemon(){
+
+            tchat.innerHTML = "";
+
+
+            pokemon1 = listPokemon[getRandom(0,listPokemon.length)];
+            pokemon2 = listPokemon[getRandom(0,listPokemon.length)];
+
+            tchat.innerHTML += pokemon1.nom+" est apparut dans l'arène. <br>";
+            tchat.innerHTML += pokemon2.nom+" est arrivé pour le défier. <br>";
+            console.log(pokemon1.pv)
+            console.log(pokemon2.pv)
+
+
+        }
+
+        function fullFight(){
+            if(pokemon1 != 'undefined' && pokemon2 != 'undefined' ){
+                while(checkDeath() == false){
+                    startRound()
+                }
+                tchat.innerHTML += " Le combat est terminé <br>";
+            }
+        }
+
+        function startRound(){
+            //Si les pokemon on bien été crées 
+            if(pokemon1 != 'undefined' && pokemon2 != 'undefined' ){
+                //Test de rapiditer 
+                if(pokemon1.vitesse>pokemon2.vitesse){
+                    //Pokemon 1 attaque en premier
+                    pokemon1.fight(pokemon2);
+                    if(checkDeath())
+                        return false;   
+                    pokemon2.fight(pokemon1);
+                
+                }else if(pokemon2.vitesse>pokemon1.vitesse){
+                    //Pokemon 2 attaque en premier
+                    pokemon2.fight(pokemon1);
+                    if(checkDeath())
+                        return false;   
+                    pokemon1.fight(pokemon2);
+
+                }else{
+                    //On tire au sort en les deux
+                    if(getRandom(1,2)==1){
+                        //Pokemon 1 attaque en premier
+                        pokemon1.fight(pokemon2);
+                        if(checkDeath())
+                            return false;   
+                        pokemon2.fight(pokemon1);
+
+                    }else{
+                        //Pokemon 2 attaque en premier
+                        pokemon2.fight(pokemon1);
+                        if(checkDeath())
+                            return false;   
+                        pokemon1.fight(pokemon2);
+
+                    }
+                }
+            }else{
+                console.log("Aucun pokemon dans l'arene.")
+            }
+        }
+
+        function checkDeath(){
+            if(pokemon1.pv <= 0 || pokemon2.pv <= 0){
+                console.log(listPokemon)
+                return true
+            }
+            else
+                return false
+        }
+
+        //Génère un int entre en max est un min
+        function getRandom(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+
+        //Resistance | Eau > Feu > Plante > Vol > Eau
+        function getResistance (type, typeCible){
+            var resitance;
+            //Si forte attaque x1.1
+            //Si faible attaque x0.9
+            //Si neutre attaque x1
+            var forte = 1.1;
+            var faible = 0.9;
+            var neutre = 1;
+
+
+            switch(type){
+                case "Eau":
+                    switch(typeCible){
+                        case "Feu": resitance = forte; 
+                            break;
+                        case "Vol": resitance = faible; 
+                            break;
+                        default: resitance = neutre; 
+                            break;
+                    }
+                    break;
+                case "Feu":
+                    switch(typeCible){
+                        case "Plante": resitance = forte;  
+                            break;
+                        case "Eau": resitance = faible; 
+                            break;
+                        default: resitance = neutre; 
+                            break;
+                    }
+                    break;
+                case "Plante":
+                    switch(typeCible){
+                        case "Vol": resitance = forte;   
+                            break;
+                        case "Feu":  resitance = faible; 
+                            break;
+                        default: resitance = neutre; 
+                            break;
+                    }
+                    break;
+                case "Vol":
+                    switch(typeCible){
+                        case "Eau": resitance = forte;  
+                            break;
+                        case "Plante":  resitance = faible; 
+                            break;
+                        default: resitance = neutre; 
+                            break;
+                    }
+                    break;
+            }
+            return resitance;
+            
+        }
+
+    </script>
+
+</html>
